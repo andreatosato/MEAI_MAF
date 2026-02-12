@@ -1,0 +1,6 @@
+@Project3.SimpleAgent_HostAddress = http://localhost:5105
+
+GET {{Project3.SimpleAgent_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
