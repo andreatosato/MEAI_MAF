@@ -1,0 +1,6 @@
+@Project2.GroupChat.Client_HostAddress = http://localhost:5209
+
+GET {{Project2.GroupChat.Client_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

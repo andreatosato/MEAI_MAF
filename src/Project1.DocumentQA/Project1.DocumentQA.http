@@ -1,0 +1,6 @@
+@Project1.DocumentQA_HostAddress = http://localhost:5007
+
+GET {{Project1.DocumentQA_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

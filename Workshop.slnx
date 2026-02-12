@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Project1.DocumentQA/Project1.DocumentQA.csproj" />
+    <Project Path="src/Project2.GroupChat.Client/Project2.GroupChat.Client.csproj" />
+    <Project Path="src/Project2.GroupChat.Server/Project2.GroupChat.Server.csproj" />
+    <Project Path="src/Project3.SimpleAgent/Project3.SimpleAgent.csproj" />
+    <Project Path="src/Workshop.AppHost/Workshop.AppHost.csproj" />
+    <Project Path="src/Workshop.ServiceDefaults/Workshop.ServiceDefaults.csproj" />
+  </Folder>
+</Solution>
