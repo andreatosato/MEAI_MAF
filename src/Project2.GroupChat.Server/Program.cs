@@ -104,7 +104,7 @@ var hostedAgent = builder.AddAIAgent("groupchat-agent", (sp, sessionId) =>
         .Build();
 
     // Step 7: Wrappare il workflow come AIAgent per l'hosting
-    return workflow.AsAgent(name: "GroupChatTeam");
+    return workflow.AsAgent(name: "groupchat-agent");
 })
 .WithInMemorySessionStore();
 
@@ -155,7 +155,6 @@ app.MapPost("/api/groupchat", async (GroupChatRequest request, IServiceProvider 
     ));
 })
 .WithName("GroupChat")
-.WithOpenApi()
 .Produces<GroupChatResponse>(200)
 .WithDescription("Invia una richiesta al team GroupChat con 3 agenti (Analista, Sviluppatore, Revisore).");
 
@@ -182,8 +181,7 @@ app.MapGet("/api/info", () =>
         }
     });
 })
-.WithName("Info")
-.WithOpenApi();
+.WithName("Info");
 
 app.Run();
 

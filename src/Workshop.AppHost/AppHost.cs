@@ -10,17 +10,27 @@
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// Leggere le configurazioni Azure OpenAI dai secrets
+var azureOpenAIEndpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"];
+var azureOpenAIDeployment = builder.Configuration["AZURE_OPENAI_DEPLOYMENT"];
+
 // Step 1: Registrare il Progetto 3 - Esempio Semplice
 // L'agente base con Swagger per testing interattivo
-var simpleAgent = builder.AddProject<Projects.Project3_SimpleAgent>("simple-agent");
+var simpleAgent = builder.AddProject<Projects.Project3_SimpleAgent>("simple-agent")
+    .WithEnvironment("AZURE_OPENAI_ENDPOINT", azureOpenAIEndpoint)
+    .WithEnvironment("AZURE_OPENAI_DEPLOYMENT", azureOpenAIDeployment);
 
 // Step 2: Registrare il Progetto 1 - Document Q&A
 // API per upload documenti e domande con RAG
-var documentQa = builder.AddProject<Projects.Project1_DocumentQA>("document-qa");
+var documentQa = builder.AddProject<Projects.Project1_DocumentQA>("document-qa")
+    .WithEnvironment("AZURE_OPENAI_ENDPOINT", azureOpenAIEndpoint)
+    .WithEnvironment("AZURE_OPENAI_DEPLOYMENT", azureOpenAIDeployment);
 
 // Step 3: Registrare il Progetto 2 - GroupChat Server (A2A)
 // Server con 3 agenti collaborativi esposto via A2A
-var groupChatServer = builder.AddProject<Projects.Project2_GroupChat_Server>("groupchat-server");
+var groupChatServer = builder.AddProject<Projects.Project2_GroupChat_Server>("groupchat-server")
+    .WithEnvironment("AZURE_OPENAI_ENDPOINT", azureOpenAIEndpoint)
+    .WithEnvironment("AZURE_OPENAI_DEPLOYMENT", azureOpenAIDeployment);
 
 // Step 4: Registrare il Progetto 2 - GroupChat Client (A2A)
 // Client che comunica con il server via protocollo A2A

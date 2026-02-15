@@ -75,7 +75,6 @@ app.MapPost("/api/chat", async (ChatRequest request, IChatClient chatClient) =>
     return Results.Ok(new ChatResponse(response.Text ?? "Nessuna risposta disponibile."));
 })
 .WithName("Chat")
-.WithOpenApi()
 .Produces<ChatResponse>(200)
 .WithDescription("Invia un messaggio all'agente AI e ricevi la risposta.");
 
@@ -110,7 +109,6 @@ app.MapPost("/api/chat-with-history", async (ChatWithHistoryRequest request, ICh
     return Results.Ok(new ChatResponse(response.Text ?? "Nessuna risposta disponibile."));
 })
 .WithName("ChatWithHistory")
-.WithOpenApi()
 .Produces<ChatResponse>(200)
 .WithDescription("Invia un messaggio con cronologia della conversazione.");
 
@@ -133,8 +131,7 @@ app.MapGet("/api/info", () =>
         }
     });
 })
-.WithName("Info")
-.WithOpenApi();
+.WithName("Info");
 
 app.Run();
 
