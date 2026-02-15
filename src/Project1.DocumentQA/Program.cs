@@ -114,7 +114,6 @@ app.MapPost("/api/documents/upload", async (
         $"Documento caricato e indicizzato con successo in {chunkCount} chunk."));
 })
 .WithName("UploadDocument")
-.WithOpenApi()
 .DisableAntiforgery()
 .Produces<UploadResponse>(200)
 .WithDescription("Carica un file (PDF, DOCX, TXT, MD) nel repository documentale.");
@@ -168,7 +167,6 @@ app.MapPost("/api/documents/ask", async (
         relevantChunks.Select(c => c.Source).Distinct().ToArray()));
 })
 .WithName("AskQuestion")
-.WithOpenApi()
 .Produces<AnswerResponse>(200)
 .WithDescription("Fai una domanda sul contenuto dei documenti caricati.");
 
@@ -181,7 +179,6 @@ app.MapGet("/api/documents", (DocumentRepository repository) =>
     return Results.Ok(repository.GetDocuments());
 })
 .WithName("ListDocuments")
-.WithOpenApi()
 .WithDescription("Elenca tutti i documenti caricati nel repository.");
 
 // ============================================================================
