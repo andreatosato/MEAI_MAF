@@ -137,8 +137,7 @@ public static class DocumentEndpoints
                 }
             });
         })
-        .WithName("Info")
-        .WithOpenApi();
+        .WithName("Info");
 
         return app;
     }
