@@ -1,13 +1,13 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DataIngestion;
 using Microsoft.Extensions.VectorData;
-using Microsoft.ML.Tokenizers;
 
 namespace Project1.DocumentQA;
 
 /// <summary>
 /// Servizio per gestione documenti e ricerca vettoriale.
-/// Usa MarkItDownReader e HeaderChunker da Microsoft.Extensions.DataIngestion.
+/// Usa MarkdownReader per MD/TXT e PdfDocumentReader per PDF (100% .NET).
+/// Ogni sezione del documento diventa un chunk con embedding.
 /// </summary>
 public class DocumentRepository
 {
@@ -38,44 +38,52 @@ public class DocumentRepository
     }
 
     /// <summary>
-    /// Processa un documento usando DataIngestion:
-    /// MarkItDownReader per la lettura, HeaderChunker per il chunking,
-    /// e salvataggio manuale nel VectorStore con embedding.
+    /// Processa un documento usando DataIngestion (solo .NET):
+    /// PdfDocumentReader per PDF, MarkdownReader per MD/TXT,
+    /// Processa ogni sezione direttamente senza chunker intermedio.
     /// </summary>
     public async Task<int> IngestDocumentAsync(string filePath, string originalName)
     {
         _logger.LogInformation("Inizio ingestion per: {FileName}", originalName);
 
-        // Reader: converte qualsiasi formato (PDF, DOCX, TXT, MD) in IngestionDocument
-        IngestionDocumentReader reader = new MarkItDownReader();
+        // Seleziona il reader appropriato in base all'estensione
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        IngestionDocumentReader reader = extension switch
+        {
+            ".pdf" => new PdfDocumentReader(),
+            ".md" or ".txt" => new MarkdownReader(),
+            _ => throw new NotSupportedException($"Formato file non supportato: {extension}")
+        };
+
         var document = await reader.ReadAsync(new FileInfo(filePath));
 
         _logger.LogInformation("Documento letto: {Sections} sezioni trovate", document.Sections.Count);
 
-        // Chunker: divide il documento in chunk basati su header con tokenizer GPT-4
-        Tokenizer tokenizer = TiktokenTokenizer.CreateForModel("gpt-4");
-        IngestionChunkerOptions chunkerOptions = new(tokenizer)
-        {
-            MaxTokensPerChunk = 500,
-            OverlapTokens = 50
-        };
-        HeaderChunker chunker = new(chunkerOptions);
-
-        // Processare il documento con il chunker
-        var chunks = chunker.ProcessAsync(document);
-
         var collection = await GetCollectionAsync();
         var chunkCount = 0;
 
-        await foreach (var ingestionChunk in chunks)
+        // Processa ogni sezione direttamente (bypassando SectionChunker che ha problemi)
+        foreach (var section in document.Sections)
         {
-            // Genera l'embedding per ogni chunk
-            var embedding = await _embeddingGenerator.GenerateAsync(ingestionChunk.Content);
+            var markdown = section.GetMarkdown();
+
+            // Salta sezioni vuote
+            if (string.IsNullOrWhiteSpace(markdown))
+            {
+                _logger.LogWarning("Sezione vuota saltata");
+                continue;
+            }
+
+            _logger.LogInformation("Processando sezione {Count}: {Length} caratteri", 
+                chunkCount + 1, markdown.Length);
+
+            // Genera l'embedding per la sezione
+            var embedding = await _embeddingGenerator.GenerateAsync(markdown);
 
             var chunk = new DocumentChunk
             {
                 Id = Guid.NewGuid().ToString(),
-                Text = ingestionChunk.Content,
+                Text = markdown,
                 Source = originalName,
                 Vector = embedding.Vector
             };

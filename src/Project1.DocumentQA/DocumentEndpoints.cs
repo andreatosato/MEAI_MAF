@@ -21,7 +21,7 @@ public static class DocumentEndpoints
             if (file.Length == 0)
                 return Results.BadRequest("Il file è vuoto.");
 
-            var allowedExtensions = new[] { ".pdf", ".docx", ".txt", ".md" };
+            var allowedExtensions = new[] { ".pdf", ".txt", ".md" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(extension))
                 return Results.BadRequest($"Formato non supportato. Formati accettati: {string.Join(", ", allowedExtensions)}");
@@ -46,7 +46,7 @@ public static class DocumentEndpoints
         .WithName("UploadDocument")
         .DisableAntiforgery()
         .Produces<UploadResponse>(200)
-        .WithDescription("Carica un file (PDF, DOCX, TXT, MD) nel repository documentale.");
+        .WithDescription("Carica un file (PDF, TXT, MD) nel repository documentale. Usa PdfPig per PDF e MarkdownReader per MD/TXT (pure .NET).");
 
         // ============================================================================
         // Endpoint: POST /api/documents/ask
