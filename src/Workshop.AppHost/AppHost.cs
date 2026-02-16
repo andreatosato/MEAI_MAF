@@ -24,7 +24,8 @@ var simpleAgent = builder.AddProject<Projects.Project3_SimpleAgent>("simple-agen
 // API per upload documenti e domande con RAG
 var documentQa = builder.AddProject<Projects.Project1_DocumentQA>("document-qa")
     .WithEnvironment("AZURE_OPENAI_ENDPOINT", azureOpenAIEndpoint)
-    .WithEnvironment("AZURE_OPENAI_DEPLOYMENT", azureOpenAIDeployment);
+    .WithEnvironment("AZURE_OPENAI_DEPLOYMENT", azureOpenAIDeployment)
+    .WithEnvironment("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", builder.Configuration["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"]);
 
 // Step 3: Registrare il Progetto 2 - GroupChat Server (A2A)
 // Server con 3 agenti collaborativi esposto via A2A

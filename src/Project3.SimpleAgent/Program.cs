@@ -1,19 +1,9 @@
-// ============================================================================
-// Progetto 3 - Esempio Semplice di Microsoft Agent Framework
-// ============================================================================
-// Questo progetto dimostra le basi di Microsoft Agent Framework (MAF).
-// Crea un agente AI semplice basato su ChatClientAgent e lo espone via API
-// con Swagger per il testing interattivo.
-//
-// Step 1: Configurare il client OpenAI
-// Step 2: Creare un AIAgent con istruzioni personalizzate
-// Step 3: Esporre l'agente tramite endpoint API
-// ============================================================================
-
 using Azure.AI.OpenAI;
 using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using OpenAI.Chat;
+using Project3.SimpleAgent;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,17 +17,45 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "Progetto 3 - Simple Agent API", Version = "v1" });
 });
 
-// Step 3: Registrare il client OpenAI
-builder.Services.AddSingleton<IChatClient>(sp =>
+// Step 3: Registrare HttpClient e AIAgent
+builder.Services.AddHttpClient();
+
+builder.Services.AddSingleton<AIAgent>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-    var endpoint = config["AZURE_OPENAI_ENDPOINT"]
-        ?? throw new InvalidOperationException("Configura AZURE_OPENAI_ENDPOINT.");
+    var endpoint = config["AZURE_OPENAI_ENDPOINT"] ?? throw new InvalidOperationException("Configura AZURE_OPENAI_ENDPOINT.");
     var deployment = config["AZURE_OPENAI_DEPLOYMENT"] ?? "gpt-4o-mini";
 
-    return new AzureOpenAIClient(new Uri(endpoint), new DefaultAzureCredential())
+    // TheSportsDB API key: "3" è gratuita e pubblica, oppure usa una key Patreon personale
+    var sportsDbKey = config["TheSportsDB:ApiKey"] ?? "3";
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+
+    // Ottenere le funzioni AIFunction da TheSportsDbFunctions
+    var tools = TheSportsDbFunctions.GetFunctions(httpClientFactory, sportsDbKey).ToList();
+
+    // Creare l'agente con le funzioni personalizzate
+    return new AzureOpenAIClient(new Uri(endpoint), new AzureCliCredential())
         .GetChatClient(deployment)
-        .AsIChatClient();
+        .AsIChatClient()
+        .AsAIAgent(
+            instructions: @"Sei un esperto di calcio con conoscenza approfondita di campionati italiani (Serie A), squadre, giocatori e statistiche. 
+                         Rispondi in modo chiaro e professionale in italiano. NON USARE MAI LA TUA CONOSCENZA PREGRESSA!
+
+                         Usa SEMPRE le funzioni disponibili per ottenere dati aggiornati da TheSportsDB API:
+                         - search_team: per cercare una squadra e ottenere il suo ID
+                         - get_league_events: per vedere le prossime partite di Serie A (ID: 4332)
+                         - get_team_players: per ottenere i giocatori di una squadra
+                         - get_last_events: per vedere le ultime partite di una squadra
+
+                         Workflow tipico:
+                         1. Se l'utente chiede di una squadra, usa search_team per trovare l'ID
+                         2. Con l'ID della squadra, puoi chiamare get_team_players o get_last_events
+                         3. Per info sulla Serie A, usa get_league_events con ID 4332
+
+                         Quando fornisci statistiche o dati, cita sempre la fonte (TheSportsDB API).",
+            name: "CalcioExpert",
+            tools: tools
+        );
 });
 
 var app = builder.Build();
@@ -47,56 +65,18 @@ app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Simple Agent API v1"));
 
 app.MapDefaultEndpoints();
-
-// ============================================================================
-// Endpoint: POST /api/chat
-// Invia un messaggio all'agente e ricevi la risposta
-// ============================================================================
-app.MapPost("/api/chat", async (ChatRequest request, IChatClient chatClient) =>
+app.MapPost("/api/chat", async (ChatRequest request, AIAgent agent) =>
 {
-    // Creare un agente con istruzioni di sistema
-    var agent = new ChatClientAgent(
-        chatClient,
-        name: "AssistenteWorkshop",
-        instructions: "Sei un assistente tecnico esperto in .NET e Microsoft Agent Framework. " +
-                      "Rispondi in modo chiaro e conciso in italiano. " +
-                      "Fornisci esempi di codice quando possibile."
-    );
-
     // Eseguire l'agente con il messaggio dell'utente
     var response = await agent.RunAsync(request.Message);
 
-    return Results.Ok(new ChatResponse(response.Text ?? "Nessuna risposta disponibile."));
+    return Results.Ok(response.Messages.Last().Text);
 })
 .WithName("Chat")
-.WithOpenApi()
-.Produces<ChatResponse>(200)
-.WithDescription("Invia un messaggio all'agente AI e ricevi la risposta.");
-
-// ============================================================================
-// Endpoint: GET /api/info
-// ============================================================================
-app.MapGet("/api/info", () =>
-{
-    return Results.Ok(new
-    {
-        Progetto = "Progetto 3 - Simple Agent",
-        Framework = "Microsoft Agent Framework",
-        Descrizione = "Agente AI semplice per chat interattiva",
-        Endpoints = new[]
-        {
-            "POST /api/chat - Chat con l'agente AI",
-            "GET /api/info - Informazioni sull'agente"
-        }
-    });
-})
-.WithName("Info")
-.WithOpenApi();
+.Produces<AgentResponse>(200)
+.WithDescription("Invia un messaggio all'agente esperto di calcio e ricevi la risposta.");
 
 app.Run();
 
-// ============================================================================
-// Modelli
-// ============================================================================
 record ChatRequest(string Message);
 record ChatResponse(string Response);

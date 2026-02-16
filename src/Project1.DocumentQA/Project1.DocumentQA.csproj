@@ -14,8 +14,13 @@
     <PackageReference Include="Microsoft.Extensions.DataIngestion" Version="10.3.0-preview.1.26109.11" />
     <PackageReference Include="Microsoft.Extensions.DataIngestion.MarkItDown" Version="10.3.0-preview.1.26109.11" />
     <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" Version="9.7.0" />
+    <PackageReference Include="Microsoft.ML.Tokenizers.Data.Cl100kBase" Version="2.0.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.70.0-preview" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="uploads\" />
   </ItemGroup>
 
   <PropertyGroup>
